@@ -6,10 +6,17 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     private Vector3 playerVelocity;
     private bool groundedPlayer;
+    public static Transform InstanceTransform { get; private set; }
 
     [Header("Configuración de Movimiento")]
     [SerializeField] private float playerSpeed = 5.0f;
     [SerializeField] private float gravityValue = -9.81f;
+
+    private void Awake()
+    {
+        // El jugador se registra a sí mismo como la instancia activa
+        InstanceTransform = transform;
+    }
 
     private void Start()
     {
@@ -39,5 +46,14 @@ public class PlayerController : MonoBehaviour
         // Aplicamos la gravedad verticalmente
         playerVelocity.y += gravityValue * Time.deltaTime;
         controller.Move(playerVelocity * Time.deltaTime);
+    }
+
+    private void OnDestroy()
+    {
+        // Limpia la referencia si el jugador es destruido o se cambia de escena
+        if (InstanceTransform == transform)
+        {
+            InstanceTransform = null;
+        }
     }
 }
