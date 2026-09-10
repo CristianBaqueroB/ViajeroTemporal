@@ -5,7 +5,8 @@ using UnityEngine.AI;
 public enum EnemyState
 {
     Patrolling,
-    Following
+    Following,
+    Attacking
 }
 
 public class EnemyController : MonoBehaviour
@@ -20,6 +21,7 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float detectionRange = 10f;
     [SerializeField] private float viewAngle = 120f;
     [SerializeField] private float losePlayerTime = 3f;
+    [SerializeField] private float attackRange = 1.2f;
 
     [Header("Physics Mask")]
     [Tooltip("Capas que BLOQUEAN la visión (ej: Default, Obstacles). NO incluyas la capa del Player ni del Enemy.")]
@@ -36,6 +38,7 @@ public class EnemyController : MonoBehaviour
     private bool _isWaiting;
     private float _timeSinceLostPlayer;
     private Coroutine _waitCoroutine;
+    private bool _isHitting;
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int IsFollowingHash = Animator.StringToHash("IsFollowing");
@@ -85,7 +88,11 @@ public class EnemyController : MonoBehaviour
 
             case EnemyState.Following:
                 FollowPlayer();
-
+                if (distanceToPlayer <= attackRange)
+                {
+                    _state = EnemyState.Attacking;
+                    StartAttack();
+                }
                 if (!CanSeePlayer())
                 {
                     _timeSinceLostPlayer += Time.deltaTime;
@@ -100,9 +107,52 @@ public class EnemyController : MonoBehaviour
                     _timeSinceLostPlayer = 0f;
                 }
                 break;
+            case EnemyState.Attacking:
+                Attack();
+
+                // Si terminó la animación del golpe y el jugador se alejó, vuelve a perseguir
+                if (!_isHitting && distanceToPlayer > attackRange)
+                {
+                    _state = EnemyState.Following;
+                    _agent.isStopped = false;
+                }
+                // Si sigue en rango pero terminó el golpe previo, encadena otro ataque
+                else if (!_isHitting && distanceToPlayer <= attackRange)
+                {
+                    StartAttack();
+                }
+                break;
         }
 
         UpdateAnimations();
+    }
+
+    private void StartAttack()
+    {
+        _agent.isStopped = true;
+        _isHitting = true;
+        _animator.SetTrigger("Hit");
+
+    }
+
+    private void Attack()
+    {
+        _agent.isStopped = true;
+
+        // Orientar suavemente hacia el jugador durante el ataque
+        Vector3 direction = (player.position - transform.position).normalized;
+        direction.y = 0f;
+
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f * Time.deltaTime);
+        }
+    }
+
+    private void OnBiteAnimationEnd()
+    {
+        _isHitting = false;
     }
 
     private void FollowPlayer()
