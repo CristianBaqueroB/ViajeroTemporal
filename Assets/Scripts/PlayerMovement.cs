@@ -2,84 +2,81 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Propiedad Singleton accesible desde cualquier script (EnemyController)
     public static Transform InstanceTransform { get; private set; }
 
-    [Header("Configuración de Movimiento")]
-    [SerializeField] private float walkSpeed = 2.5f;
-    [SerializeField] private float runSpeed = 5.5f;
-    [SerializeField] private float rotationSpeed = 10f;
+    [Header("Movimiento")]
+    public float speed = 4f;
+    public float rotationSpeed = 10f;
 
-    private Animator _animator;
-    private Vector3 _forward, _right;
-    private float _currentSpeed;
+    [Header("Salto")]
+    public float jumpForce = 8f;
+    public float groundCheckDistance = 1.2f; // Distancia para alcanzar el suelo desde el pivote
+    public LayerMask groundLayer = ~0; // Detecta todas las capas por defecto
 
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    [Header("Referencias")]
+    public Animator animator;
+
+    private Vector3 forward, right;
+    private Rigidbody rb;
+    private bool isGrounded;
 
     private void Awake()
     {
-        // Se registra a sí mismo inmediatamente al cargarse en la escena
         InstanceTransform = transform;
-        _animator = GetComponentInChildren<Animator>();
-    }
+        rb = GetComponent<Rigidbody>();
 
-    private void Start()
-    {
-        if (Camera.main != null)
+        if (animator == null)
         {
-            _forward = Camera.main.transform.forward;
-            _forward.y = 0;
-            _forward = Vector3.Normalize(_forward);
-
-            _right = Camera.main.transform.right;
-            _right.y = 0;
-            _right = Vector3.Normalize(_right);
+            animator = GetComponentInChildren<Animator>();
         }
     }
 
-    private void Update()
+    void Start()
     {
+        if (Camera.main != null)
+        {
+            forward = Camera.main.transform.forward;
+            forward.y = 0;
+            forward = Vector3.Normalize(forward);
+
+            right = Camera.main.transform.right;
+            right.y = 0;
+            right = Vector3.Normalize(right);
+        }
+    }
+
+    void Update()
+    {
+        // Detecta el suelo lanzando un rayo hacia abajo desde el centro del personaje
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f;
+        isGrounded = Physics.Raycast(rayOrigin, Vector3.down, groundCheckDistance, groundLayer);
+
+        // Dibuja una lÃ­nea roja/verde en la pestaÃ±a Scene para visualizar la detecciÃ³n de suelo
+        Debug.DrawRay(rayOrigin, Vector3.down * groundCheckDistance, isGrounded ? Color.green : Color.red);
+
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        Vector3 direction = horizontalInput * _right + verticalInput * _forward;
+        Vector3 direction = horizontalInput * right + verticalInput * forward;
+        float moveMagnitude = direction.magnitude;
 
-        if (direction.magnitude > 0.1f)
+        if (moveMagnitude > 0.1f)
         {
-            // Detecta si se presiona la tecla de Sprint (Shift Izquierdo o Derecho)
-            bool isSprinting = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-            // Define la velocidad deseada
-            float targetSpeed = isSprinting ? runSpeed : walkSpeed;
-
-            // Transición suave de velocidad
-            _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, Time.deltaTime * 10f);
-
-            // Desplazamiento y rotación
-            transform.position += direction.normalized * (_currentSpeed * Time.deltaTime);
+            transform.position += direction * speed * Time.deltaTime;
 
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
-        else
+
+        // Salto al presionar Espacio si estÃ¡ tocando el suelo
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            // Si no se presiona ninguna tecla, la velocidad desacelera a 0
-            _currentSpeed = Mathf.Lerp(_currentSpeed, 0f, Time.deltaTime * 10f);
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
 
-        // Envia el valor de velocidad al Animator
-        if (_animator != null)
+        if (animator != null)
         {
-            _animator.SetFloat(SpeedHash, _currentSpeed);
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // Limpia la referencia global al destruir o cambiar de escena
-        if (InstanceTransform == transform)
-        {
-            InstanceTransform = null;
+            animator.SetFloat("Speed", moveMagnitude);
         }
     }
 }
