@@ -22,6 +22,7 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float viewAngle = 120f;
     [SerializeField] private float losePlayerTime = 3f;
     [SerializeField] private float attackRange = 1.2f;
+    [SerializeField] private float attackDamage = 25f; // Cantidad de daño por ataque
 
     [Header("Physics Mask")]
     [Tooltip("Capas que BLOQUEAN la visión (ej: Default, Obstacles). NO incluyas la capa del Player ni del Enemy.")]
@@ -132,7 +133,6 @@ public class EnemyController : MonoBehaviour
         _agent.isStopped = true;
         _isHitting = true;
         _animator.SetTrigger("Hit");
-
     }
 
     private void Attack()
@@ -150,8 +150,17 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    // Se llama desde el Animation Event o al terminar la animación del golpe
     private void OnBiteAnimationEnd()
     {
+        if (player != null && Vector3.Distance(transform.position, player.position) <= attackRange + 0.5f)
+        {
+            if (player.TryGetComponent(out PlayerHealth playerHealth))
+            {
+                playerHealth.TakeDamage(attackDamage);
+            }
+        }
+
         _isHitting = false;
     }
 

@@ -10,6 +10,10 @@ public class ClueMissionManager : MonoBehaviour
     [SerializeField] private GameObject panelEvidencia;
     [SerializeField] private TextMeshProUGUI textoEvidencia;
 
+    [Header("Objeto Final de la Misión")]
+    [Tooltip("Arrastra aquí el objeto de la pista final que está dentro de la cabaña")]
+    [SerializeField] private GameObject objetoFinal;
+
     private bool tieneCartera = false;
     private bool tieneFotos = false;
     private bool tieneHerramientas = false;
@@ -23,6 +27,12 @@ public class ClueMissionManager : MonoBehaviour
     private void Start()
     {
         if (panelEvidencia != null) panelEvidencia.SetActive(false);
+
+        // Oculta la pista final desde el inicio del juego
+        if (objetoFinal != null)
+        {
+            objetoFinal.SetActive(false);
+        }
     }
 
     public void RecolectarPista(TipoPista tipo)
@@ -45,7 +55,7 @@ public class ClueMissionManager : MonoBehaviour
         if (ObjectiveManager.Instance != null)
         {
             ObjectiveManager.Instance.ActualizarObjetivo(
-                $"Pistas del asesino ({total}/3): " +
+                $"Pistas de Cindy ({total}/3): " +
                 $"Cartera {(tieneCartera ? "[✓]" : "[ ]")} | " +
                 $"Fotos {(tieneFotos ? "[✓]" : "[ ]")} | " +
                 $"Herramientas {(tieneHerramientas ? "[✓]" : "[ ]")}"
@@ -63,7 +73,7 @@ public class ClueMissionManager : MonoBehaviour
 
                 if (textoEvidencia != null)
                 {
-                    textoEvidencia.text = "<b>¡EVIDENCIA CONFIRMADA!</b>\n\nLas pistas confirman que el cazador es un asesino en serie. Es hora de infiltrarse en la cabaña para buscar el cuaderno de coordenadas.";
+                    textoEvidencia.text = "<b>¡EVIDENCIA CONFIRMADA!</b>\n\nLas pistas confirman que el cazador es un asesino en serie. Busca dentro de la cabaña para encontrar la pista definitiva.";
                 }
 
                 Time.timeScale = 0f;
@@ -79,12 +89,18 @@ public class ClueMissionManager : MonoBehaviour
         Time.timeScale = 1f;
         if (panelEvidencia != null) panelEvidencia.SetActive(false);
 
+        // Activa la pista final dentro de la cabaña
+        if (objetoFinal != null)
+        {
+            objetoFinal.SetActive(true);
+        }
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
         if (ObjectiveManager.Instance != null)
         {
-            ObjectiveManager.Instance.ActualizarObjetivo("Infíltrate en la cabaña del cazador y recupera el Cuaderno.");
+            ObjectiveManager.Instance.ActualizarObjetivo("Se ha ubicado una nueva pista dentro de la cabaña. Si encuentras la pista sin que el asesino te vea podrás regresar a tu vida normal y Cindy podrá escapar.");
         }
     }
 }

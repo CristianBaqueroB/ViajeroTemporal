@@ -8,8 +8,8 @@ public class CindyInteraction : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dialogueText;
 
     [Header("Mensaje de Salvación")]
-    [TextArea(3, 5)]
-    [SerializeField] private string mensajeDialogo = "<b>Jugador:</b> ¡Tranquila, Cindy! Te encontré. Prometo que no voy a dejar que ese cazador te asesine.\n\n<i>[Presiona E o ESPACIO para continuar]</i>";
+    [TextArea(4, 8)]
+    [SerializeField] private string mensajeDialogo = "<b>Jugador:</b> ¡Tranquila, Cindy! Te encontré. Prometo que no voy a dejar que ese cazador te asesine.\n\n<b>Cindy:</b> ¡Gracias! Pero ten cuidado, hay unas pistas detrás de la cabaña. Encuéntralas para demostrar que el asesino es quien vive ahí.\n\n<i>[Presiona E, ESPACIO o Clic para continuar]</i>";
 
     private bool yaFueEncontrada = false;
     private bool esperandoTeclas = false;
@@ -63,9 +63,10 @@ public class CindyInteraction : MonoBehaviour
 
         Time.timeScale = 1f; // Reanuda el juego
 
+        // Actualiza el objetivo en pantalla para dirigir al jugador a las pistas
         if (ObjectiveManager.Instance != null)
         {
-            ObjectiveManager.Instance.ActualizarObjetivo("Escolta a Cindy a través del bosque.");
+            ObjectiveManager.Instance.ActualizarObjetivo("Hay unas pistas detrás de la cabaña, encuéntralas para demostrar que el asesino es quien vive en esta cabaña.");
         }
 
         CindyFollower follower = GetComponent<CindyFollower>();
