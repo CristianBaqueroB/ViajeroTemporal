@@ -1,72 +1,38 @@
-using System.Collections;
 using UnityEngine;
 
 public class ControlTecho : MonoBehaviour
 {
-    // Cambiamos a un Array [] para poder arrastrar múltiples piezas del techo
+    // Array para arrastrar múltiples piezas del techo desde el Inspector
     [SerializeField] private Renderer[] techosRenderers;
-    [SerializeField] private float velocidadFade = 2f;
-
-    private Coroutine corrutinaActual;
-    private MaterialPropertyBlock propiedadBloque;
-    private int idColorBase;
-
-    private void Awake()
-    {
-        propiedadBloque = new MaterialPropertyBlock();
-        idColorBase = Shader.PropertyToID("_BaseColor");
-    }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) IniciarFade(0f);
+        // Si el jugador entra al trigger, ocultamos el techo de inmediato
+        if (other.CompareTag("Player"))
+        {
+            MostrarTecho(false);
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player")) IniciarFade(1f);
+        // Si el jugador sale del trigger, volvemos a mostrar el techo de inmediato
+        if (other.CompareTag("Player"))
+        {
+            MostrarTecho(true);
+        }
     }
 
-    private void IniciarFade(float alfaObjetivo)
+    private void MostrarTecho(bool visible)
     {
-        if (corrutinaActual != null) StopCoroutine(corrutinaActual);
-        corrutinaActual = StartCoroutine(FadeTecho(alfaObjetivo));
-    }
+        if (techosRenderers == null) return;
 
-    private IEnumerator FadeTecho(float alfaObjetivo)
-    {
-        // Si vamos a mostrar el techo, activamos todos primero
-        if (alfaObjetivo > 0f)
+        foreach (Renderer r in techosRenderers)
         {
-            foreach (Renderer r in techosRenderers) r.enabled = true;
-        }
-
-        // Tomamos el color del primer elemento como referencia para la transición
-        techosRenderers[0].GetPropertyBlock(propiedadBloque);
-        Color colorActual = techosRenderers[0].sharedMaterial.GetColor(idColorBase);
-        if (propiedadBloque.GetColor(idColorBase) != Color.clear)
-        {
-            colorActual = propiedadBloque.GetColor(idColorBase);
-        }
-
-        while (!Mathf.Approximately(colorActual.a, alfaObjetivo))
-        {
-            colorActual.a = Mathf.MoveTowards(colorActual.a, alfaObjetivo, velocidadFade * Time.deltaTime);
-            propiedadBloque.SetColor(idColorBase, colorActual);
-
-            // ¡Clave! Aplicamos el cambio de color a cada pieza de la lista
-            foreach (Renderer r in techosRenderers)
+            if (r != null)
             {
-                r.SetPropertyBlock(propiedadBloque);
+                r.enabled = visible;
             }
-
-            yield return null;
-        }
-
-        // Si el objetivo era ser invisible, apagamos todos los renderizadores
-        if (alfaObjetivo == 0f)
-        {
-            foreach (Renderer r in techosRenderers) r.enabled = false;
         }
     }
 }
