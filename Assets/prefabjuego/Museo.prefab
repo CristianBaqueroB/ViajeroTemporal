@@ -18785,7 +18785,6 @@ MonoBehaviour:
   techosRenderers:
   - {fileID: 4760292050210285618}
   - {fileID: 8568261117148481326}
-  velocidadFade: 1
 --- !u!1 &5019695452025735992
 GameObject:
   m_ObjectHideFlags: 0
